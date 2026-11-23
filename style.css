@@ -21,6 +21,10 @@ body {
 	color: var(--text);
 }
 
+body.dark {
+	background: #000;
+}
+
 main,
 .top,
 .hero,

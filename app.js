@@ -60,6 +60,9 @@ console.log(`${yearsSince(movies[0].date)}년 전 개봉`);
 console.log(`완성된 포스터 주소: ${posterUrl(movies[0].poster, "w342")}`);
 
 
+const liked = JSON.parse(localStorage.getItem("liked") || "[]");
+
+
 // 영화 배열 ⇒ 보드에 카드 생성(반환값 없음)
 function renderCards(list) {
 	const board = document.querySelector(".board");
@@ -68,24 +71,33 @@ function renderCards(list) {
 		const card = document.createElement("article");
 		card.className = "card";
 		card.dataset.id = m.id;
+
 		// 찜 버튼으로 인해 제거
 		// card.onclick = () => { alert(m.overview); }
+
 		if (8 <= m.rating) {
 			card.classList.add("hot");
 		}
+
+		let likeClass = "like";
+		if (liked.includes(m.id)) {
+			likeClass += " liked";
+		}
+
 		card.innerHTML = `
 <img class="poster" src="${posterUrl(m.poster, "w342")}" alt="${m.title} 포스터">
 <span class="badge">${m.rating}</span>
 <div class="info">
-<h2>${m.title}</h2>
-<p class="year">${m.year}</p>
-<button class="like" type="button">❤︎</button>
+	<h2>${m.title}</h2>
+	<p class="year">${m.year}</p>
+	<button class="${likeClass}" type="button" data-id="${m.id}">❤︎</button>
 </div>`;
 		board.appendChild(card);
 	}
 
 	document.getElementById("count").textContent = list.length + "편";
 	updateLikeCount();
+
 	if (list.length === 0) {
 		board.classList.add("is-empty");
 	} else {
@@ -115,7 +127,13 @@ function getView() {
 
 
 function updateLikeCount() {
-	document.getElementById("likeCount").textContent = document.querySelectorAll(".liked").length;
+	document.getElementById("likeCount").textContent = liked.length;
+}
+
+
+function saveLiked() {
+	console.log(liked);
+	localStorage.setItem("liked", JSON.stringify(liked))
 }
 
 
@@ -123,16 +141,33 @@ function updateLikeCount() {
 이름 없는 함수로 선언하면 this는 보드가 되는데, 화살표 함수를 쓰면 window를 가리키는 건 아마 실행 주체를 누구로 보냐가 다른 것일까?
 기존 프로그래밍 언어에서 this는 객체 자신을 가리켰지만, 여기서는 아직 규칙을 정확히 모르겠다.
 */
+// 찜 버튼
 document.querySelector(".board").addEventListener("click", (e) => {
 	if (e.target.classList.contains("like")) {
-		e.target.classList.toggle("liked");
+
+		// 안전하게 데이터 기반 검사로 변경
+		const movieID = Number(e.target.dataset.id)
+		if (liked.includes(movieID)) {
+			liked.splice(liked.indexOf(movieID), 1);
+			e.target.classList.remove("liked");
+		} else {
+			liked.push(movieID);
+			e.target.classList.add("liked");
+		}
+		saveLiked();
 		updateLikeCount();
 	}
 })
 
+// 검색
 document.getElementById("q").addEventListener("keydown", (e) => {
 	if (e.key === "Escape") {
 		e.target.value = "";
 		renderCards(getView());
 	}
+})
+
+// 다크 모드
+document.getElementById("theme-toggle").addEventListener("click", (e) => {
+	document.body.classList.toggle("dark")
 })
